@@ -1,4 +1,19 @@
 services:
+  # --- KAFKA UI ---
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    ports:
+      - "8080:8080"
+    environment:
+      DYNAMIC_CONFIG_ENABLED: "true"
+      KAFKA_CLUSTERS_0_NAME: local-kafka
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+    depends_on:
+      - kafka
+    networks:
+      - internal
+
   # --- KAFKA ---
   kafka:
     image: apache/kafka:latest
@@ -79,6 +94,23 @@ services:
       - patient-service-db
       - kafka
       - billing-service
+    networks:
+      - internal
+
+  # --- Analytics SERVICE ---
+  analytics-service:
+    build: ./analytics-service
+    container_name: analytics-service
+    ports:
+      - "4002:4002"
+    environment:
+      # Kafka Connection (Using internal Docker hostname)
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+
+      # App Config
+      SERVER_PORT: 4002
+    depends_on:
+      - kafka
     networks:
       - internal
 
