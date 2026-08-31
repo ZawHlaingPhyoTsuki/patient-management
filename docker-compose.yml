@@ -52,6 +52,41 @@ services:
     networks:
       - internal
 
+  # --- AUTH DB ---
+  auth-service-db:
+    image: postgres:17
+    container_name: auth-service-db
+    ports:
+      - "5001:5432"
+    environment:
+      POSTGRES_USER: admin_user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: db
+    volumes:
+      - /home/tsukuyomi/Desktop/db_volumes/auth-service-db:/var/lib/postgresql/data
+    networks:
+      - internal
+
+  # --- AUTH SERVICE ---
+  auth-service:
+    build: ./auth-service
+    container_name: auth-service
+    ports:
+      - "4005:4005"
+    environment:
+      # App Config
+      SERVER_PORT: 4005
+
+      # DB Connection (Using internal Docker hostname)
+      SPRING_DATASOURCE_URL: jdbc:postgresql://auth-service-db:5432/db
+      SPRING_DATASOURCE_USERNAME: admin_user
+      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_SQL_INIT_MODE: always
+    networks:
+      - internal
+
+
   # --- BILLING SERVICE ---
   billing-service:
     build: ./billing-service
@@ -71,13 +106,18 @@ services:
   patient-service:
     build: ./patient-service
     container_name: patient-service
-    ports:
-      - "4000:4000"
+#    ports:
+#      - "4000:4000"
     environment:
+      # App Config
+      SERVER_PORT: 4000
+
       # DB Connection (Using internal Docker hostname)
       SPRING_DATASOURCE_URL: jdbc:postgresql://patient-service-db:5432/db
       SPRING_DATASOURCE_USERNAME: admin_user
       SPRING_DATASOURCE_PASSWORD: password
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_SQL_INIT_MODE: always
 
       # Kafka Connection (Using internal Docker hostname)
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
@@ -86,10 +126,6 @@ services:
       BILLING_SERVICE_ADDRESS: billing-service
       BILLING_SERVICE_GRPC_PORT: 9001
 
-      # App Config
-      SERVER_PORT: 4000
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      SPRING_SQL_INIT_MODE: always
     depends_on:
       - patient-service-db
       - kafka
@@ -111,6 +147,18 @@ services:
       SERVER_PORT: 4002
     depends_on:
       - kafka
+    networks:
+      - internal
+
+  # --- API GATEWAY ---
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "4004:4004"
+    environment:
+      # App Config
+      SERVER_PORT: 4004
     networks:
       - internal
 
