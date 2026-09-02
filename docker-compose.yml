@@ -4,7 +4,7 @@ services:
     image: provectuslabs/kafka-ui:latest
     container_name: kafka-ui
     ports:
-      - "8080:8080"
+      - "${KAFKA_UI_PORT}:8080"
     environment:
       DYNAMIC_CONFIG_ENABLED: "true"
       KAFKA_CLUSTERS_0_NAME: local-kafka
@@ -44,11 +44,11 @@ services:
     ports:
       - "5000:5432"
     environment:
-      POSTGRES_USER: admin_user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: db
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     volumes:
-      - /home/tsukuyomi/Desktop/db_volumes/patient-service-db:/var/lib/postgresql/data
+      - ${DB_VOLUME_BASE}/patient-service-db:/var/lib/postgresql/data
     networks:
       - internal
 
@@ -59,11 +59,11 @@ services:
     ports:
       - "5001:5432"
     environment:
-      POSTGRES_USER: admin_user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: db
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     volumes:
-      - /home/tsukuyomi/Desktop/db_volumes/auth-service-db:/var/lib/postgresql/data
+      - ${DB_VOLUME_BASE}/auth-service-db:/var/lib/postgresql/data
     networks:
       - internal
 
@@ -72,15 +72,16 @@ services:
     build: ./auth-service
     container_name: auth-service
     ports:
-      - "4005:4005"
+      - "${AUTH_PORT}:4005"
     environment:
       # App Config
       SERVER_PORT: 4005
+      JWT_SECRET: ${JWT_SECRET}
 
       # DB Connection (Using internal Docker hostname)
-      SPRING_DATASOURCE_URL: jdbc:postgresql://auth-service-db:5432/db
-      SPRING_DATASOURCE_USERNAME: admin_user
-      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_DATASOURCE_URL: jdbc:postgresql://auth-service-db:5432/${DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_SQL_INIT_MODE: always
     networks:
@@ -92,8 +93,8 @@ services:
     build: ./billing-service
     container_name: billing-service
     ports:
-      - "4001:4001" # HTTP/REST Port
-      - "9001:9001" # gRPC Port
+      - "${BILLING_PORT}:4001" # HTTP/REST Port
+      - "${BILLING_GRPC_PORT}:9001" # gRPC Port
     environment:
       SERVER_PORT: 4001
       GRPC_SERVER_PORT: 9001
@@ -106,16 +107,16 @@ services:
   patient-service:
     build: ./patient-service
     container_name: patient-service
-#    ports:
-#      - "4000:4000"
+    #    ports:
+    #      - "${PATIENT_PORT}:4000"
     environment:
       # App Config
       SERVER_PORT: 4000
 
       # DB Connection (Using internal Docker hostname)
-      SPRING_DATASOURCE_URL: jdbc:postgresql://patient-service-db:5432/db
-      SPRING_DATASOURCE_USERNAME: admin_user
-      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_DATASOURCE_URL: jdbc:postgresql://patient-service-db:5432/${DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_SQL_INIT_MODE: always
 
@@ -138,7 +139,7 @@ services:
     build: ./analytics-service
     container_name: analytics-service
     ports:
-      - "4002:4002"
+      - "${ANALYTICS_PORT}:4002"
     environment:
       # Kafka Connection (Using internal Docker hostname)
       SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
@@ -155,7 +156,7 @@ services:
     build: ./api-gateway
     container_name: api-gateway
     ports:
-      - "4004:4004"
+      - "${GATEWAY_PORT}:4004"
     environment:
       # App Config
       SERVER_PORT: 4004
