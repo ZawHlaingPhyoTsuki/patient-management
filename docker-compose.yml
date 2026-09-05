@@ -71,8 +71,8 @@ services:
   auth-service:
     build: ./auth-service
     container_name: auth-service
-    ports:
-      - "${AUTH_PORT}:4005"
+#    ports:
+#      - "${AUTH_PORT}:4005"
     environment:
       # App Config
       SERVER_PORT: 4005
@@ -160,6 +160,7 @@ services:
     environment:
       # App Config
       SERVER_PORT: 4004
+      AUTH_SERVICE_URL: ${AUTH_SERVICE_URL}
     networks:
       - internal
 
